@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>专注番茄钟 - 提升效率的专注计时器</title>
+  <!-- Tailwind CSS v3 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- ECharts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <!-- 统一的 Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#3b82f6',
+            secondary: '#10b981',
+            warning: '#ef4444',
+            dark: '#1a1a2e',
+            'dark-light': '#16213e',
+            'break-light': '#0f3460',
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'fade-in': 'fadeIn 0.5s ease-in-out',
+            'slide-up': 'slideUp 0.3s ease-out',
+          },
+          keyframes: {
+            pulse: {
+              '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+              '50%': { opacity: 0.7, transform: 'scale(1.05)' },
+            },
+            fadeIn: {
+              '0%': { opacity: 0 },
+              '100%': { opacity: 1 },
+            },
+            slideUp: {
+              '0%': { transform: 'translateY(20px)', opacity: 0 },
+              '100%': { transform: 'translateY(0)', opacity: 1 },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .glow {
+        box-shadow: 0 0 15px 5px rgba(59, 130, 246, 0.5);
+      }
+      .glow-break {
+        box-shadow: 0 0 15px 5px rgba(16, 185, 129, 0.5);
+      }
+      .glow-warning {
+        box-shadow: 0 0 15px 5px rgba(239, 68, 68, 0.5);
+      }
+      .bg-focus {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      }
+      .bg-break {
+        background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
+      }
+      .bg-custom {
+        background: var(--bg-gradient, linear-gradient(135deg, #1a1a2e 0%, #16213e 100%));
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .glass-light {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .btn-primary {
+        @apply px-4 py-2 rounded-lg bg-primary hover:bg-primary/80 transition-colors;
+      }
+      .btn-secondary {
+        @apply px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors;
+      }
+      .btn-outline {
+        @apply px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors;
+      }
+      .btn-icon {
+        @apply p-2 rounded-full hover:bg-white/10 transition-colors;
+      }
+      .btn-icon-lg {
+        @apply p-4 rounded-full hover:bg-white/10 transition-colors;
+      }
+      .btn-toggle {
+        @apply p-6 rounded-full bg-primary hover:bg-primary/80 transition-colors;
+      }
+      .btn-toggle-break {
+        @apply p-6 rounded-full bg-secondary hover:bg-secondary/80 transition-colors;
+      }
+      .duration-btn {
+        @apply px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors;
+      }
+      .duration-btn-active {
+        @apply px-4 py-2 rounded-lg bg-primary hover:bg-primary/80 transition-colors;
+      }
+      .duration-btn-active-break {
+        @apply px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors;
+      }
+      .panel {
+        @apply glass rounded-3xl p-8;
+      }
+      .panel-light {
+        @apply glass-light rounded-2xl p-6;
+      }
+      .panel-title {
+        @apply text-xl font-bold mb-4;
+      }
+      .input-primary {
+        @apply w-full bg-transparent border-none outline-none text-white placeholder-gray-400;
+      }
+      .input-modal {
+        @apply w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary;
+      }
+      .checkbox-custom {
+        @apply p-2 rounded-full mr-3 flex-shrink-0 bg-white/10;
+      }
+      .checkbox-custom-checked {
+        @apply p-2 rounded-full mr-3 flex-shrink-0 bg-primary;
+      }
+      .mode-indicator {
+        @apply inline-block px-6 py-2 rounded-full bg-primary/20 text-primary font-medium text-lg;
+      }
+      .mode-indicator-break {
+        @apply inline-block px-6 py-2 rounded-full bg-secondary/20 text-secondary font-medium text-lg;
+      }
+      .toast {
+        @apply px-4 py-2 rounded-lg shadow-lg animate-fade-in;
+      }
+      .toast-success {
+        @apply bg-green-600 text-white;
+      }
+      .toast-error {
+        @apply bg-red-600 text-white;
+      }
+      .toast-warning {
+        @apply bg-yellow-600 text-white;
+      }
+      .toast-info {
+        @apply bg-gray-700 text-white;
+      }
+      .theme-btn {
+        @apply w-10 h-10 rounded-full;
+      }
+      .theme-btn-active {
+        @apply w-10 h-10 rounded-full ring-2 ring-offset-2 ring-offset-dark;
+      }
+    }
+  </style>
+</head>
+<body class="bg-custom min-h-screen transition-colors duration-1000 ease-in-out text-white font-sans">
+  <!-- 主容器 -->
+  <div id="app" class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- 顶部导航 -->
+    <header class="flex justify-between items-center mb-8">
+      <div class="flex items-center">
+        <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center mr-3">
+          <i class="fa fa-clock-o text-xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-shadow">专注番茄钟</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button id="settingsBtn" class="btn-icon">
+          <i class="fa fa-cog text-xl"></i>
+        </button>
+        <button id="statsBtn" class="btn-icon">
+          <i class="fa fa-bar-chart text-xl"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- 主计时器区域 -->
+    <main class="relative">
+      <!-- 光晕效果容器 -->
+      <div id="glowContainer" class="absolute inset-0 rounded-full glow transition-all duration-1000 ease-in-out animate-pulse-slow"></div>
+      
+      <!-- 计时器卡片 -->
+      <div class="panel mb-8 relative z-10">
+        <!-- 模式指示器 -->
+        <div class="text-center mb-6">
+          <span id="modeIndicator" class="mode-indicator">
+            专注模式
+          </span>
+        </div>
+        
+        <!-- 时间显示 -->
+        <div class="text-center mb-8">
+          <div id="timeDisplay" class="text-7xl md:text-8xl font-bold tracking-tight">
+            25:00
+          </div>
+          <div id="taskNameDisplay" class="text-xl text-gray-300 mt-2">
+            准备开始专注
+          </div>
+        </div>
+        
+        <!-- 控制按钮 -->
+        <div class="flex justify-center space-x-6">
+          <button id="resetBtn" class="btn-icon-lg">
+            <i class="fa fa-refresh text-2xl"></i>
+          </button>
+          <button id="toggleBtn" class="btn-toggle">
+            <i class="fa fa-play text-3xl"></i>
+          </button>
+          <button id="skipBtn" class="btn-icon-lg">
+            <i class="fa fa-forward text-2xl"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- 任务输入卡片 -->
+      <div class="panel-light mb-8">
+        <div class="flex items-center">
+          <div class="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center mr-4">
+            <i class="fa fa-tasks text-secondary"></i>
+          </div>
+          <div class="flex-1">
+            <input 
+              type="text" 
+              id="taskInput" 
+              placeholder="输入本次专注的任务..." 
+              class="input-primary text-lg"
+            >
+          </div>
+          <button id="saveTaskBtn" class="btn-secondary">
+            保存
+          </button>
+        </div>
+      </div>
+      
+      <!-- 任务清单 -->
+      <div class="panel-light mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium">任务清单</h3>
+          <button id="addTaskBtn" class="btn-icon">
+            <i class="fa fa-plus"></i>
+          </button>
+        </div>
+        <div id="taskList" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+          <!-- 任务列表将通过JS动态添加 -->
+          <div class="text-center text-gray-400 py-4">
+            暂无任务，点击"+"添加
+          </div>
+        </div>
+      </div>
+      
+            <!-- 时长选择 -->
+      <div class="glass-light rounded-2xl p-6">
+        <h3 class="text-lg font-medium mb-4">快速设置</h3>
+<div class="flex flex-wrap gap-3">
+  <button data-duration="15" class="duration-btn">15分钟</button>
+  <button data-duration="25" class="duration-btn duration-btn-active">25分钟</button>
+  <button data-duration="45" class="duration-btn">45分钟</button>
+  <button data-duration="5" class="duration-btn">5分钟休息</button>
+  <button data-duration="15" class="duration-btn">15分钟休息</button>
+</div>   
+
+        <!-- 手动设置任意时长 -->
+        <div class="mt-4 pt-4 border-t border-white/10">
+          <h3 class="text-lg font-medium mb-3">自定义时长（分钟）</h3>
+          <div class="flex gap-3 items-center">
+            <input 
+              type="number" 
+              id="customTimeInput" 
+              min="1" 
+              max="180"
+              placeholder="输入时长(min)"
+              class="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+            <button id="setCustomTimeBtn" class="px-4 py-2 rounded-lg bg-primary hover:bg-primary/80 transition-colors whitespace-nowrap">
+              应用
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 统计面板 (默认隐藏) -->
+    <div id="statsPanel" class="fixed inset-0 bg-dark/95 z-50 flex items-center justify-center p-4 hidden animate-fade-in">
+      <div class="panel max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold">专注统计</h2>
+          <button id="closeStatsBtn" class="btn-icon">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <!-- 统计概览 -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="glass-light rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold" id="todayTotal">0</div>
+            <div class="text-sm text-gray-300">今日专注(分钟)</div>
+          </div>
+          <div class="glass-light rounded-xl p-4 text-center">
+            <div class="text-3xl font-bold" id="weekPomodoros">0</div>
+            <div class="text-sm text-gray-300">本周番茄数</div>
+          </div>
+        </div>
+        
+        <!-- 图表 -->
+        <div class="mb-6">
+          <h3 class="text-lg font-medium mb-4">近7天专注时长</h3>
+          <div class="h-64">
+            <canvas id="statsChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- 最近记录 -->
+        <div>
+          <h3 class="text-lg font-medium mb-4">最近记录</h3>
+          <div id="recentRecords" class="space-y-3">
+            <!-- 记录将通过JS动态添加 -->
+            <div class="text-center text-gray-400 py-4">
+              暂无专注记录
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置面板 (默认隐藏) -->
+    <div id="settingsPanel" class="fixed inset-0 bg-dark/95 z-50 flex items-center justify-center p-4 hidden animate-fade-in">
+      <div class="panel max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold">设置</h2>
+          <button id="closeSettingsBtn" class="btn-icon">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <!-- 设置项 -->
+        <div class="space-y-6">
+          <!-- 声音提醒 -->
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-medium">声音提醒</h3>
+              <p class="text-sm text-gray-300">计时结束时播放提示音</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="soundToggle" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+          </div>
+          
+          <!-- 系统通知 -->
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-medium">系统通知</h3>
+              <p class="text-sm text-gray-300">计时结束时显示系统通知</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="notificationToggle" class="sr-only peer" checked>
+              <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+          </div>
+          
+          <!-- 主题选择 -->
+          <div>
+  <h3 class="font-medium mb-3">主题颜色</h3>
+  <div class="flex space-x-3">
+    <button data-theme="default" class="w-10 h-10 rounded-full bg-blue-500 theme-btn theme-btn-active"></button>
+    <button data-theme="green" class="w-10 h-10 rounded-full bg-green-500 theme-btn"></button>
+    <button data-theme="purple" class="w-10 h-10 rounded-full bg-purple-500 theme-btn"></button>
+    <button data-theme="orange" class="w-10 h-10 rounded-full bg-orange-500 theme-btn"></button>
+  </div>
+</div>
+          
+          <!-- 积分系统 -->
+          <div class="glass-light rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-medium">番茄积分</h3>
+              <div class="flex items-center">
+                <i class="fa fa-star text-yellow-400 mr-1"></i>
+                <span id="pointsDisplay" class="font-bold">0</span>
+              </div>
+            </div>
+            <p class="text-sm text-gray-300 mb-3">每完成一个番茄获得10积分</p>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between items-center">
+                <span>海洋绿主题</span>
+                <span class="text-gray-400">需要50积分</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span>钢琴音效</span>
+                <span class="text-gray-400">需要100积分</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span>专注森林动画</span>
+                <span class="text-gray-400">需要150积分</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast 提示容器 -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- 任务输入模态框 (默认隐藏) -->
+    <div id="taskModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden animate-fade-in">
+      <div class="panel max-w-md w-full">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="text-2xl font-bold" id="taskModalTitle">添加任务</h2>
+          <button id="closeTaskModalBtn" class="btn-icon">
+            <i class="fa fa-times text-xl"></i>
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div>
+            <label for="taskModalInput" class="block text-sm font-medium mb-2">任务名称</label>
+            <input 
+              type="text" 
+              id="taskModalInput" 
+              placeholder="输入任务名称..." 
+              class="input-modal"
+            >
+          </div>
+          
+          <div>
+            <label for="taskModalDescription" class="block text-sm font-medium mb-2">任务描述 (可选)</label>
+            <textarea 
+              id="taskModalDescription" 
+              placeholder="添加任务描述..." 
+              rows="3"
+              class="input-modal"
+            ></textarea>
+          </div>
+          
+          <div class="flex justify-end space-x-3 pt-4">
+            <button id="cancelTaskModalBtn" class="btn-outline">
+              取消
+            </button>
+            <button id="saveTaskModalBtn" class="btn-primary">
+              保存
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 应用状态
+    const state = {
+      currentMode: 'focus', // 'focus' 或 'break'
+      isRunning: false,
+      isPaused: false,
+      focusDuration: 25 * 60, // 默认25分钟，单位秒
+      breakDuration: 5 * 60, // 默认5分钟，单位秒
+      customDuration: null, // 自定义时长，优先级高于默认值
+      remainingTime: 25 * 60,
+      startTime: null,
+      pausedTime: 0,
+      animationFrameId: null,
+      currentTask: '',
+      taskList: [], // 任务清单
+      settings: {
+        soundEnabled: true,
+        notificationEnabled: true,
+        theme: 'default'
+      },
+      points: 0,
+      unlockedItems: [],
+      records: []
+    };
+
+    // DOM 元素
+    const elements = {
+      timeDisplay: document.getElementById('timeDisplay'),
+      modeIndicator: document.getElementById('modeIndicator'),
+      taskNameDisplay: document.getElementById('taskNameDisplay'),
+      toggleBtn: document.getElementById('toggleBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      skipBtn: document.getElementById('skipBtn'),
+      taskInput: document.getElementById('taskInput'),
+      saveTaskBtn: document.getElementById('saveTaskBtn'),
+      durationBtns: document.querySelectorAll('.duration-btn'),
+      glowContainer: document.getElementById('glowContainer'),
+      statsPanel: document.getElementById('statsPanel'),
+      settingsPanel: document.getElementById('settingsPanel'),
+      statsBtn: document.getElementById('statsBtn'),
+      settingsBtn: document.getElementById('settingsBtn'),
+      closeStatsBtn: document.getElementById('closeStatsBtn'),
+      closeSettingsBtn: document.getElementById('closeSettingsBtn'),
+      soundToggle: document.getElementById('soundToggle'),
+      notificationToggle: document.getElementById('notificationToggle'),
+      themeBtns: document.querySelectorAll('.theme-btn'),
+      pointsDisplay: document.getElementById('pointsDisplay'),
+      todayTotal: document.getElementById('todayTotal'),
+      weekPomodoros: document.getElementById('weekPomodoros'),
+      recentRecords: document.getElementById('recentRecords'),
+      toastContainer: document.getElementById('toastContainer'),
+      // 任务清单相关元素
+      taskList: document.getElementById('taskList'),
+      addTaskBtn: document.getElementById('addTaskBtn'),
+      taskModal: document.getElementById('taskModal'),
+      taskModalTitle: document.getElementById('taskModalTitle'),
+      taskModalInput: document.getElementById('taskModalInput'),
+      taskModalDescription: document.getElementById('taskModalDescription'),
+      saveTaskModalBtn: document.getElementById('saveTaskModalBtn'),
+      cancelTaskModalBtn: document.getElementById('cancelTaskModalBtn'),
+      closeTaskModalBtn: document.getElementById('closeTaskModalBtn')
+    };
+
+    // 音频上下文
+    let audioContext = null;
+
+    // 图表实例
+    let statsChart = null;
+
+    // 渲染任务列表
+    function renderTaskList() {
+      const taskListElement = elements.taskList;
+      
+      // 清空现有列表
+      taskListElement.innerHTML = '';
+      
+      if (state.taskList.length === 0) {
+        taskListElement.innerHTML = `
+          <div class="text-center text-gray-400 py-4">
+            暂无任务，点击"+"添加
+          </div>
+        `;
+        return;
+      }
+      
+      // 渲染每个任务
+      state.taskList.forEach((task, index) => {
+        const taskElement = document.createElement('div');
+        taskElement.className = `glass rounded-xl p-4 animate-slide-up ${task.completed ? 'opacity-50' : ''}`;
+        taskElement.innerHTML = `
+          <div class="flex items-start">
+            <button class="task-checkbox ${task.completed ? 'checkbox-custom-checked' : 'checkbox-custom'}" data-index="${index}">
+              <i class="fa fa-check text-white ${task.completed ? '' : 'hidden'}"></i>
+            </button>
+            <div class="flex-1">
+              <div class="font-medium ${task.completed ? 'line-through text-gray-400' : ''}">${task.name}</div>
+              ${task.description ? `<div class="text-sm text-gray-300 mt-1">${task.description}</div>` : ''}
+            </div>
+            <div class="flex space-x-2">
+              <button class="task-start-btn btn-icon" data-index="${index}">
+                <i class="fa fa-play text-sm"></i>
+              </button>
+              <button class="task-edit-btn btn-icon" data-index="${index}">
+                <i class="fa fa-pencil text-sm"></i>
+              </button>
+              <button class="task-delete-btn btn-icon" data-index="${index}">
+                <i class="fa fa-trash-o text-sm"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        
+        taskListElement.appendChild(taskElement);
+      });
+      
+      // 添加事件监听
+      document.querySelectorAll('.task-checkbox').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.currentTarget.dataset.index);
+          toggleTaskCompletion(index);
+        });
+      });
+      
+      document.querySelectorAll('.task-start-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.currentTarget.dataset.index);
+          startTask(index);
+        });
+      });
+      
+      document.querySelectorAll('.task-edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.currentTarget.dataset.index);
+          editTask(index);
+        });
+      });
+      
+      document.querySelectorAll('.task-delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const index = parseInt(e.currentTarget.dataset.index);
+          deleteTask(index);
+        });
+      });
+    }
+    
+    // 添加任务
+    function addTask(name, description = '') {
+      const task = {
+        id: Date.now().toString(),
+        name: name.trim(),
+        description: description.trim(),
+        completed: false,
+        createdAt: Date.now()
+      };
+      
+      state.taskList.push(task);
+      saveData();
+      renderTaskList();
+      showToast('任务已添加', 'success');
+    }
+    
+// 切换任务完成状态
+function toggleTaskCompletion(index) {
+  if (index >= 0 && index < state.taskList.length) {
+    state.taskList[index].completed = !state.taskList[index].completed;
+    saveData();
+    renderTaskList();
+
+    const status = state.taskList[index].completed ? '已完成' : '未完成';
+    showToast(`任务${status}`, 'info');
+
+    // 任务完成：暂停计时 + 清空顶部任务文字，不重置倒计时
+    if (state.taskList[index].completed) {
+      // 暂停计时器
+      if (state.isRunning && !state.isPaused) {
+        pauseTimer();
+      }
+      // 清空当前任务，重置文字显示
+      state.currentTask = '';
+      updateUI();
+    }
+  }
+}
+    
+    // 开始任务
+    function startTask(index) {
+      if (index >= 0 && index < state.taskList.length) {
+        const task = state.taskList[index];
+        if (task.completed) {
+          showToast('已完成的任务无法开始', 'warning');
+          return;
+        }
+        
+        state.currentTask = task.name;
+        updateUI();
+        showToast(`开始任务: ${task.name}`, 'info');
+        
+        // 如果计时器未运行，自动开始
+        if (!state.isRunning) {
+          startTimer();
+        }
+      }
+    }
+    
+    // 编辑任务
+    function editTask(index) {
+      if (index >= 0 && index < state.taskList.length) {
+        const task = state.taskList[index];
+        elements.taskModalTitle.textContent = '编辑任务';
+        elements.taskModalInput.value = task.name;
+        elements.taskModalDescription.value = task.description || '';
+        elements.taskModal.dataset.editIndex = index;
+        elements.taskModal.classList.remove('hidden');
+      }
+    }
+    
+    // 删除任务
+    function deleteTask(index) {
+      if (index >= 0 && index < state.taskList.length) {
+        const taskName = state.taskList[index].name;
+        state.taskList.splice(index, 1);
+        saveData();
+        renderTaskList();
+        showToast(`任务 "${taskName}" 已删除`, 'info');
+      }
+    }
+    
+    // 初始化应用
+    function initApp() {
+      // 加载保存的数据
+      loadData();
+      
+      // 初始化UI
+      updateUI();
+      
+      // 初始化图表
+      initChart();
+      
+      // 更新统计数据
+      updateStats();
+      
+      // 请求通知权限
+      requestNotificationPermission();
+      
+      // 初始化事件监听
+      setupEventListeners();
+      
+      // 初始化音频上下文
+      initAudioContext();
+      
+      // 监听页面可见性变化
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
+
+    // 初始化音频上下文
+    function initAudioContext() {
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        console.warn('Web Audio API 不受支持');
+      }
+    }
+
+    // 播放提示音
+    function playNotificationSound() {
+      if (!state.settings.soundEnabled || !audioContext) return;
+      
+      try {
+        // 如果音频上下文被挂起，恢复它
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+        
+        // 创建振荡器
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // 设置音频参数
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.5);
+        
+        // 设置音量
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        // 播放声音
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+      } catch (e) {
+        console.error('播放提示音失败:', e);
+      }
+    }
+
+    // 请求通知权限
+    function requestNotificationPermission() {
+      if ('Notification' in window && state.settings.notificationEnabled) {
+        Notification.requestPermission();
+      }
+    }
+
+    // 显示系统通知
+    function showNotification(title, body) {
+      if (!state.settings.notificationEnabled || !('Notification' in window)) return;
+      
+      if (Notification.permission === 'granted') {
+        new Notification(title, {
+          body: body,
+          icon: '/favicon.ico'
+        });
+      }
+    }
+
+    // 初始化图表
+    function initChart() {
+      const ctx = document.getElementById('statsChart').getContext('2d');
+      
+      // 获取近7天的日期和数据
+      const { labels, data } = getChartData();
+      
+      statsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '专注时长(分钟)',
+            data: data,
+            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: 'rgba(255, 255, 255, 0.7)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: 'rgba(255, 255, 255, 0.7)'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // 获取图表数据
+    function getChartData() {
+      const today = new Date();
+      const labels = [];
+      const data = [];
+      
+      // 获取近7天的日期
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        
+        // 格式化日期标签 (MM/DD)
+        const label = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+        labels.push(label);
+        
+        // 获取当天的专注总时长
+        const dayRecords = getRecordsByDate(date);
+        const totalMinutes = dayRecords.reduce((sum, record) => sum + record.duration, 0);
+        data.push(totalMinutes);
+      }
+      
+      return { labels, data };
+    }
+
+    // 更新图表
+    function updateChart() {
+      if (!statsChart) return;
+      
+      const { labels, data } = getChartData();
+      
+      statsChart.data.labels = labels;
+      statsChart.data.datasets[0].data = data;
+      statsChart.update();
+    }
+
+    // 更新统计数据
+    function updateStats() {
+      // 计算今日专注总时长
+      const today = new Date();
+      const todayRecords = getRecordsByDate(today);
+      const todayTotalMinutes = todayRecords.reduce((sum, record) => sum + record.duration, 0);
+      elements.todayTotal.textContent = todayTotalMinutes;
+      
+      // 计算本周番茄数
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 7);
+      
+      const weekRecords = state.records.filter(record => {
+        const recordDate = new Date(record.timestamp);
+        return recordDate >= weekStart && recordDate < weekEnd;
+      });
+      
+      elements.weekPomodoros.textContent = weekRecords.length;
+      
+      // 更新最近记录
+      updateRecentRecords();
+      
+      // 更新图表
+      updateChart();
+    }
+
+    // 更新最近记录列表
+    function updateRecentRecords() {
+      // 清空现有记录
+      elements.recentRecords.innerHTML = '';
+      
+      // 按时间倒序排序记录
+      const sortedRecords = [...state.records].sort((a, b) => b.timestamp - a.timestamp);
+      
+      // 显示最近5条记录
+      const recentRecords = sortedRecords.slice(0, 5);
+      
+      if (recentRecords.length === 0) {
+        elements.recentRecords.innerHTML = `
+          <div class="text-center text-gray-400 py-4">
+            暂无专注记录
+          </div>
+        `;
+        return;
+      }
+      
+      recentRecords.forEach(record => {
+        const date = new Date(record.timestamp);
+        const formattedDate = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        
+        const recordElement = document.createElement('div');
+        recordElement.className = 'glass-light rounded-xl p-4 flex justify-between items-center animate-slide-up';
+        recordElement.innerHTML = `
+          <div>
+            <div class="font-medium">${record.taskName || '未命名任务'}</div>
+            <div class="text-sm text-gray-300">${formattedDate}</div>
+          </div>
+          <div class="flex items-center">
+            <span class="text-lg font-medium mr-2">${record.duration}分钟</span>
+            <button class="delete-record-btn btn-icon" data-id="${record.id}">
+              <i class="fa fa-trash-o"></i>
+            </button>
+          </div>
+        `;
+        
+        elements.recentRecords.appendChild(recordElement);
+      });
+      
+      // 添加删除记录的事件监听
+      document.querySelectorAll('.delete-record-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const recordId = e.currentTarget.dataset.id;
+          deleteRecord(recordId);
+          updateStats();
+        });
+      });
+    }
+
+    // 获取指定日期的记录
+    function getRecordsByDate(date) {
+      const targetDate = new Date(date);
+      targetDate.setHours(0, 0, 0, 0);
+      
+      const nextDate = new Date(targetDate);
+      nextDate.setDate(targetDate.getDate() + 1);
+      
+      return state.records.filter(record => {
+        const recordDate = new Date(record.timestamp);
+        return recordDate >= targetDate && recordDate < nextDate;
+      });
+    }
+
+    // 保存记录
+    function saveRecord() {
+      if (!state.currentTask && state.currentMode === 'focus') return;
+      
+      const record = {
+        id: Date.now().toString(),
+        date: new Date().toISOString().split('T')[0],
+        taskName: state.currentTask || '未命名任务',
+        duration: state.currentMode === 'focus' ? 
+          Math.round((state.focusDuration - state.remainingTime) / 60) : 
+          Math.round((state.breakDuration - state.remainingTime) / 60),
+        timestamp: Date.now()
+      };
+      
+      // 避免重复保存
+      const existingRecord = state.records.find(r => r.timestamp === record.timestamp);
+      if (existingRecord) return;
+      
+      state.records.push(record);
+      
+      // 如果是专注模式完成，增加积分
+      if (state.currentMode === 'focus') {
+        addPoints(10);
+      }
+      
+      // 保存数据
+      saveData();
+      
+      // 更新统计
+      updateStats();
+      
+      // 显示提示
+      showToast(`已完成 ${record.duration} 分钟的${state.currentMode === 'focus' ? '专注' : '休息'}`, 'success');
+    }
+
+    // 删除记录
+    function deleteRecord(recordId) {
+      state.records = state.records.filter(record => record.id !== recordId);
+      saveData();
+      showToast('记录已删除', 'info');
+    }
+
+    // 增加积分
+    function addPoints(points) {
+      state.points += points;
+      elements.pointsDisplay.textContent = state.points;
+      
+      // 检查解锁项
+      checkUnlocks();
+      
+      // 保存数据
+      saveData();
+      
+      // 显示提示
+      showToast(`获得 ${points} 积分！`, 'success');
+    }
+
+    // 检查解锁项
+    function checkUnlocks() {
+      const unlocks = [
+        { id: 'theme_green', points: 50, name: '海洋绿主题' },
+        { id: 'sound_piano', points: 100, name: '钢琴音效' },
+        { id: 'animation_forest', points: 150, name: '专注森林动画' }
+      ];
+      
+      unlocks.forEach(unlock => {
+        if (state.points >= unlock.points && !state.unlockedItems.includes(unlock.id)) {
+          state.unlockedItems.push(unlock.id);
+          showToast(`恭喜解锁 ${unlock.name}！`, 'success');
+        }
+      });
+    }
+
+    // 显示提示
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      
+      // 设置样式
+      let toastClass = 'toast toast-info';
+      if (type === 'success') toastClass = 'toast toast-success';
+      if (type === 'error') toastClass = 'toast toast-error';
+      if (type === 'warning') toastClass = 'toast toast-warning';
+      
+      toast.className = toastClass;
+      toast.textContent = message;
+      
+      // 添加到容器
+      elements.toastContainer.appendChild(toast);
+      
+      // 1.5秒后自动移除
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+        setTimeout(() => {
+          elements.toastContainer.removeChild(toast);
+        }, 300);
+      }, 1500);
+    }
+
+    // 保存数据到本地存储
+    function saveData() {
+      const dataToSave = {
+        settings: state.settings,
+        points: state.points,
+        unlockedItems: state.unlockedItems,
+        records: state.records,
+        taskList: state.taskList
+      };
+      
+      localStorage.setItem('pomodoroData', JSON.stringify(dataToSave));
+    }
+
+    // 从本地存储加载数据
+    function loadData() {
+      try {
+        const savedData = localStorage.getItem('pomodoroData');
+        
+        if (savedData) {
+          const parsedData = JSON.parse(savedData);
+          
+          // 加载设置
+          if (parsedData.settings) {
+            state.settings = { ...state.settings, ...parsedData.settings };
+            elements.soundToggle.checked = state.settings.soundEnabled;
+            elements.notificationToggle.checked = state.settings.notificationEnabled;
+          }
+          
+          // 加载积分和解锁项
+          if (typeof parsedData.points === 'number') {
+            state.points = parsedData.points;
+            elements.pointsDisplay.textContent = state.points;
+          }
+          
+          if (Array.isArray(parsedData.unlockedItems)) {
+            state.unlockedItems = parsedData.unlockedItems;
+          }
+          
+          // 加载记录
+          if (Array.isArray(parsedData.records)) {
+            state.records = parsedData.records;
+          }
+          
+          // 加载任务列表
+          if (Array.isArray(parsedData.taskList)) {
+            state.taskList = parsedData.taskList;
+            renderTaskList();
+          }
+          
+          // 应用主题
+          applyTheme(state.settings.theme);
+        }
+      } catch (e) {
+        console.error('加载数据失败:', e);
+      }
+    }
+
+   // 应用主题
+function applyTheme(theme) {
+  state.settings.theme = theme;
+  
+  // 更新按钮选中状态
+  elements.themeBtns.forEach(btn => {
+    btn.classList.remove('theme-btn-active');
+  });
+  document.querySelector(`[data-theme="${theme}"]`).classList.add('theme-btn-active');
+  
+  // 切换颜色
+  const root = document.documentElement;
+  
+  switch (theme) {
+    case 'default':
+      root.style.setProperty('--primary-color', '#3b82f6');
+      root.style.setProperty('--secondary-color', '#10b981');
+      break;
+    case 'green':
+      root.style.setProperty('--primary-color', '#10b981');
+      root.style.setProperty('--secondary-color', '#059669');
+      break;
+    case 'purple':
+      root.style.setProperty('--primary-color', '#8b5cf6');
+      root.style.setProperty('--secondary-color', '#ec4899');
+      break;
+    case 'orange':
+      root.style.setProperty('--primary-color', '#f97316');
+      root.style.setProperty('--secondary-color', '#ef4444');
+      break;
+  }
+  
+  // 把 Tailwind 类替换成支持 CSS 变量的类
+  document.querySelectorAll('[class*="bg-primary"]').forEach(el => {
+    el.style.backgroundColor = 'var(--primary-color)';
+  });
+  document.querySelectorAll('[class*="text-primary"]').forEach(el => {
+    el.style.color = 'var(--primary-color)';
+  });
+  document.querySelectorAll('[class*="bg-secondary"]').forEach(el => {
+    el.style.backgroundColor = 'var(--secondary-color)';
+  });
+  document.querySelectorAll('[class*="text-secondary"]').forEach(el => {
+    el.style.color = 'var(--secondary-color)';
+  });
+
+  // 光晕也要跟着变
+  const glow = document.getElementById('glowContainer');
+  if (state.currentMode === 'focus') {
+    glow.style.boxShadow = `0 0 15px 5px rgba(${hexToRgb(getComputedStyle(root).getPropertyValue('--primary-color'))}, 0.5)`;
+  } else {
+    glow.style.boxShadow = `0 0 15px 5px rgba(${hexToRgb(getComputedStyle(root).getPropertyValue('--secondary-color'))}, 0.5)`;
+  }
+
+  saveData();
+      // 更新UI
+      updateUI();
+    }
+// 辅助函数：颜色转换
+function hexToRgb(hex) {
+  hex = hex.trim();
+  if (hex.startsWith('#')) hex = hex.slice(1);
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  return `${r}, ${g}, ${b}`;
+}
+    // 更新UI
+    function updateUI() {
+      // 更新时间显示
+      const minutes = Math.floor(state.remainingTime / 60);
+      const seconds = state.remainingTime % 60;
+      elements.timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      // 更新模式指示器
+      if (state.currentMode === 'focus') {
+        elements.modeIndicator.textContent = '专注模式';
+        elements.modeIndicator.className = 'mode-indicator';
+      } else {
+        elements.modeIndicator.textContent = '休息模式';
+        elements.modeIndicator.className = 'mode-indicator-break';
+      }
+      
+      // 更新任务名称显示
+      if (state.currentTask) {
+        elements.taskNameDisplay.textContent = state.currentTask;
+      } else {
+        elements.taskNameDisplay.textContent = state.currentMode === 'focus' ? '准备开始专注' : '享受休息时光';
+      }
+      
+      // 更新播放/暂停按钮
+      if (state.isRunning && !state.isPaused) {
+        elements.toggleBtn.innerHTML = '<i class="fa fa-pause text-3xl"></i>';
+      } else {
+        elements.toggleBtn.innerHTML = '<i class="fa fa-play text-3xl"></i>';
+      }
+      
+      // 更新背景和光晕效果
+      updateVisualEffects();
+    }
+
+    // 更新视觉效果
+    function updateVisualEffects() {
+      const body = document.body;
+      const glowContainer = elements.glowContainer;
+      const toggleBtn = elements.toggleBtn;
+      
+      // 根据模式更新背景和光晕
+      if (state.currentMode === 'focus') {
+        body.className = body.className.replace(/bg-break/, 'bg-focus');
+        glowContainer.className = glowContainer.className.replace(/glow-break/, 'glow');
+        
+        // 更新按钮颜色
+        toggleBtn.className = toggleBtn.className.replace(/btn-toggle-break/, 'btn-toggle');
+      } else {
+        body.className = body.className.replace(/bg-focus/, 'bg-break');
+        glowContainer.className = glowContainer.className.replace(/glow/, 'glow-break');
+        
+        // 更新按钮颜色
+        toggleBtn.className = toggleBtn.className.replace(/btn-toggle/, 'btn-toggle-break');
+      }
+      
+      // 如果是最后10秒，添加警告效果
+      if (state.remainingTime <= 10 && state.isRunning && !state.isPaused) {
+        glowContainer.classList.add('glow-warning');
+        glowContainer.classList.remove('animate-pulse-slow');
+        glowContainer.classList.add('animate-pulse-fast');
+      } else {
+        glowContainer.classList.remove('glow-warning');
+        glowContainer.classList.add('animate-pulse-slow');
+        glowContainer.classList.remove('animate-pulse-fast');
+      }
+    }
+
+    // 开始计时器
+    function startTimer() {
+      if (state.isRunning && !state.isPaused) return;
+      
+      if (!state.isRunning) {
+        // 首次启动或重置后启动
+        state.isRunning = true;
+        state.isPaused = false;
+        state.startTime = performance.now();
+        state.pausedTime = 0;
+      } else if (state.isPaused) {
+        // 恢复暂停的计时器
+        state.isPaused = false;
+        state.startTime = performance.now() - state.pausedTime;
+      }
+      
+      // 更新UI
+      updateUI();
+      
+      // 开始动画循环
+      animateTimer();
+      
+      // 显示提示
+      showToast(`开始${state.currentMode === 'focus' ? '专注' : '休息'}`, 'info');
+    }
+
+    // 暂停计时器
+    function pauseTimer() {
+      if (!state.isRunning || state.isPaused) return;
+      
+      state.isPaused = true;
+      state.pausedTime = performance.now() - state.startTime;
+      
+      // 取消动画帧
+      if (state.animationFrameId) {
+        cancelAnimationFrame(state.animationFrameId);
+        state.animationFrameId = null;
+      }
+      
+      // 更新UI
+      updateUI();
+      
+      // 显示提示
+      showToast('计时器已暂停', 'info');
+    }
+
+    // 重置计时器
+    function resetTimer() {
+      // 取消动画帧
+      if (state.animationFrameId) {
+        cancelAnimationFrame(state.animationFrameId);
+        state.animationFrameId = null;
+      }
+      
+      // 重置状态
+      state.isRunning = false;
+      state.isPaused = false;
+      state.remainingTime = state.currentMode === 'focus' ? 
+        (state.customDuration || state.focusDuration) : 
+        state.breakDuration;
+      
+      // 更新UI
+      updateUI();
+      
+      // 显示提示
+      showToast('计时器已重置', 'info');
+    }
+
+    // 跳过当前阶段
+    function skipCurrentPhase() {
+      // 如果正在运行，保存当前记录
+      if (state.isRunning && !state.isPaused) {
+        saveRecord();
+      }
+      
+      // 切换模式
+      state.currentMode = state.currentMode === 'focus' ? 'break' : 'focus';
+      
+      // 重置计时器
+      resetTimer();
+      
+      // 显示提示
+      showToast(`切换到${state.currentMode === 'focus' ? '专注' : '休息'}模式`, 'info');
+    }
+
+    // 计时器动画循环
+    function animateTimer() {
+      if (!state.isRunning || state.isPaused) return;
+      
+      // 计算经过的时间
+      const now = performance.now();
+      const elapsedTime = now - state.startTime;
+      const elapsedSeconds = Math.floor(elapsedTime / 1000);
+      
+      // 计算剩余时间
+      const totalSeconds = state.currentMode === 'focus' ? 
+        (state.customDuration || state.focusDuration) : 
+        state.breakDuration;
+      
+      state.remainingTime = Math.max(0, totalSeconds - elapsedSeconds);
+      
+      // 更新UI
+      updateUI();
+      
+      // 检查是否计时结束
+      if (state.remainingTime <= 0) {
+        timerComplete();
+        return;
+      }
+      
+      // 继续动画循环
+      state.animationFrameId = requestAnimationFrame(animateTimer);
+    }
+
+    // 计时器完成
+    function timerComplete() {
+      // 取消动画帧
+      if (state.animationFrameId) {
+        cancelAnimationFrame(state.animationFrameId);
+        state.animationFrameId = null;
+      }
+      
+      // 保存记录
+      saveRecord();
+      
+      // 播放提示音
+      playNotificationSound();
+      
+      // 显示系统通知
+      const title = state.currentMode === 'focus' ? '专注时间结束！' : '休息时间结束！';
+      const body = state.currentMode === 'focus' ? '是时候休息一下了' : '准备开始下一个专注周期';
+      showNotification(title, body);
+      
+      // 切换模式
+      state.currentMode = state.currentMode === 'focus' ? 'break' : 'focus';
+      
+      // 重置计时器
+      state.isRunning = false;
+      state.isPaused = false;
+      state.remainingTime = state.currentMode === 'focus' ? 
+        (state.customDuration || state.focusDuration) : 
+        state.breakDuration;
+      
+      // 更新UI
+      updateUI();
+      
+      // 显示提示
+      showToast(title, 'success');
+    }
+
+    // 处理页面可见性变化
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        // 页面隐藏时，如果计时器正在运行，暂停动画帧
+        if (state.animationFrameId) {
+          cancelAnimationFrame(state.animationFrameId);
+          state.animationFrameId = null;
+        }
+      } else {
+        // 页面显示时，如果计时器正在运行且未暂停，重新启动动画帧
+        if (state.isRunning && !state.isPaused) {
+          animateTimer();
+        }
+      }
+    }
+
+    // 设置事件监听
+    function setupEventListeners() {
+      // 切换按钮
+      elements.toggleBtn.addEventListener('click', () => {
+        if (state.isRunning && !state.isPaused) {
+          pauseTimer();
+        } else {
+          startTimer();
+        }
+      });
+      
+      // 重置按钮
+      elements.resetBtn.addEventListener('click', resetTimer);
+      
+      // 跳过按钮
+      elements.skipBtn.addEventListener('click', skipCurrentPhase);
+      
+      // 保存任务按钮
+      elements.saveTaskBtn.addEventListener('click', () => {
+        const taskName = elements.taskInput.value.trim();
+        if (taskName) {
+          state.currentTask = taskName;
+          elements.taskInput.value = '';
+          updateUI();
+          showToast('任务已保存', 'success');
+        }
+      });
+      
+      // 任务输入框回车保存
+      elements.taskInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          elements.saveTaskBtn.click();
+        }
+      });
+      
+// 时长选择按钮 模式自动切换
+elements.durationBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (state.isRunning && !state.isPaused) {
+      showToast('请先暂停计时器', 'warning');
+      return;
+    }
+
+    const duration = parseInt(btn.dataset.duration);
+    const isBreak = btn.textContent.includes('休息');
+
+    // 1. 自动切换到对应模式
+    if (isBreak) {
+      state.currentMode = 'break';
+      state.breakDuration = duration * 60;
+      state.remainingTime = state.breakDuration;
+    } else {
+      state.currentMode = 'focus';
+      state.customDuration = duration * 60;
+      state.remainingTime = state.customDuration;
+    }
+
+    // 2. 清除所有按钮激活样式
+    elements.durationBtns.forEach(b => {
+      b.classList.remove('duration-btn-active', 'duration-btn-active-break');
+      b.classList.add('duration-btn');
+    });
+
+    // 3. 高亮当前点击的按钮
+    if (isBreak) {
+      btn.classList.add('duration-btn-active-break');
+    } else {
+      btn.classList.add('duration-btn-active');
+    }
+
+    // 4. 更新UI和提示
+    updateUI();
+    showToast(`已切换到${isBreak ? '休息' : '专注'}模式，时长${duration}分钟`, 'info');
+  });
+});
+      
+      // 统计按钮
+      elements.statsBtn.addEventListener('click', () => {
+        elements.statsPanel.classList.remove('hidden');
+        updateStats();
+      });
+      
+      // 设置按钮
+      elements.settingsBtn.addEventListener('click', () => {
+        elements.settingsPanel.classList.remove('hidden');
+      });
+      
+      // 关闭统计面板按钮
+      elements.closeStatsBtn.addEventListener('click', () => {
+        elements.statsPanel.classList.add('hidden');
+      });
+      
+      // 关闭设置面板按钮
+      elements.closeSettingsBtn.addEventListener('click', () => {
+        elements.settingsPanel.classList.add('hidden');
+      });
+      
+      // 声音开关
+      elements.soundToggle.addEventListener('change', (e) => {
+        state.settings.soundEnabled = e.target.checked;
+        saveData();
+      });
+      
+      // 通知开关
+      elements.notificationToggle.addEventListener('change', (e) => {
+        state.settings.notificationEnabled = e.target.checked;
+        
+        // 如果开启通知，请求权限
+        if (e.target.checked) {
+          requestNotificationPermission();
+        }
+        
+        saveData();
+      });
+      
+      // 主题按钮
+      elements.themeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const theme = btn.dataset.theme;
+          applyTheme(theme);
+        });
+      });
+      
+      // 任务清单相关事件
+      // 添加任务按钮
+      elements.addTaskBtn.addEventListener('click', () => {
+        elements.taskModalTitle.textContent = '添加任务';
+        elements.taskModalInput.value = '';
+        elements.taskModalDescription.value = '';
+        delete elements.taskModal.dataset.editIndex;
+        elements.taskModal.classList.remove('hidden');
+      });
+      
+      // 关闭任务模态框
+      elements.closeTaskModalBtn.addEventListener('click', () => {
+        elements.taskModal.classList.add('hidden');
+      });
+      
+      elements.cancelTaskModalBtn.addEventListener('click', () => {
+        elements.taskModal.classList.add('hidden');
+      });
+      
+      // 保存任务
+      elements.saveTaskModalBtn.addEventListener('click', () => {
+        const taskName = elements.taskModalInput.value.trim();
+        const taskDescription = elements.taskModalDescription.value.trim();
+        
+        if (!taskName) {
+          showToast('请输入任务名称', 'warning');
+          return;
+        }
+        
+        // 检查是编辑还是添加
+        if (elements.taskModal.dataset.editIndex !== undefined) {
+          // 编辑现有任务
+          const index = parseInt(elements.taskModal.dataset.editIndex);
+          if (index >= 0 && index < state.taskList.length) {
+            state.taskList[index].name = taskName;
+            state.taskList[index].description = taskDescription;
+            saveData();
+            renderTaskList();
+            showToast('任务已更新', 'success');
+          }
+        } else {
+          // 添加新任务
+          addTask(taskName, taskDescription);
+        }
+        
+        // 关闭模态框
+        elements.taskModal.classList.add('hidden');
+      });
+      
+      // 点击模态框背景关闭
+      elements.taskModal.addEventListener('click', (e) => {
+        if (e.target === elements.taskModal) {
+          elements.taskModal.classList.add('hidden');
+        }
+      });
+      
+      // 键盘快捷键
+      document.addEventListener('keydown', (e) => {
+        // 空格键：开始/暂停
+        if (e.code === 'Space' && !e.target.matches('input, textarea')) {
+          e.preventDefault();
+          elements.toggleBtn.click();
+        }
+        
+        // R键：重置
+        if (e.code === 'KeyR' && !e.target.matches('input, textarea')) {
+          e.preventDefault();
+          resetTimer();
+        }
+        
+        // 右箭头键：跳过
+        if (e.code === 'ArrowRight' && !e.target.matches('input, textarea')) {
+          e.preventDefault();
+          skipCurrentPhase();
+        }
+        
+        // S键：打开/关闭统计面板
+        if (e.code === 'KeyS' && !e.target.matches('input, textarea')) {
+          e.preventDefault();
+          if (elements.statsPanel.classList.contains('hidden')) {
+            elements.statsBtn.click();
+          } else {
+            elements.closeStatsBtn.click();
+          }
+        }
+        
+        // C键：打开/关闭设置面板
+        if (e.code === 'KeyC' && !e.target.matches('input, textarea')) {
+          e.preventDefault();
+          if (elements.settingsPanel.classList.contains('hidden')) {
+            elements.settingsBtn.click();
+          } else {
+            elements.closeSettingsBtn.click();
+          }
+        }
+      });
+    }
+      // 自定义时长设置
+      const customTimeInput = document.getElementById('customTimeInput');
+      const setCustomTimeBtn = document.getElementById('setCustomTimeBtn');
+
+      function applyCustomTime() {
+        if (state.isRunning && !state.isPaused) {
+          showToast('请先暂停计时器', 'warning');
+          return;
+        }
+        let val = parseInt(customTimeInput.value.trim());
+        if (isNaN(val) || val < 1 || val > 999) {
+          showToast('请输入时长(min)', 'warning');
+          return;
+        }
+        const seconds = val * 60;
+        
+        // 根据当前模式设置相应的时长
+        if (state.currentMode === 'focus') {
+          state.customDuration = seconds;
+          state.remainingTime = seconds;
+        } else {
+          // 休息模式下更新休息时长
+          state.breakDuration = seconds;
+          state.remainingTime = seconds;
+        }
+        
+        updateUI();
+        showToast(`已设置${state.currentMode === 'focus' ? '专注' : '休息'}时长为 ${val} 分钟`, 'info');
+      }
+
+      setCustomTimeBtn.addEventListener('click', applyCustomTime);
+      customTimeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') applyCustomTime();
+      });
+    // 初始化应用
+    document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
